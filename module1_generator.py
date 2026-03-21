@@ -27,7 +27,8 @@ password_patterns = [
 words = ["Access", "Login", "Secure", "Net", "Ops", "Sys"]
 departments = ["Finance", "HR", "Engineering", "Management", "IT", "Legal", "R&D"]
 
-ALERT_LOG = "deception_alerts.log"
+ALERT_LOG         = "deception_alerts.log"
+SYSTEM_UPDATE_LOG = "system_updates.log"   # NEW — Module 2 reads this to filter false alerts
 access_times = {}
 cycle = 0
 
@@ -61,6 +62,23 @@ def fake_timestamp(offset_minutes=0):
 
 def fake_hash():
     return hashlib.md5(str(random.getrandbits(128)).encode()).hexdigest()
+
+
+# --- NEW: System Update Logger ---
+
+def log_system_update(filepath):
+    """
+    Called after every file write.
+    Tells Module 2: "I just updated this file — do not raise an alert."
+    Stored in system_updates.log at root level (outside deception_network/).
+    """
+    entry = {
+        "timestamp" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "file"      : filepath,
+        "source"    : "module1_system"
+    }
+    with open(SYSTEM_UPDATE_LOG, "a") as f:
+        f.write(json.dumps(entry) + "\n")
 
 
 # --- Alert Detection ---
@@ -107,6 +125,7 @@ def generate_credentials():
     path = os.path.join(BASE, "credentials", "admin_backup_credentials.txt")
     with open(path, "w") as f:
         f.write("\n".join(lines))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] credentials updated")
 
 
@@ -138,6 +157,7 @@ def generate_database():
     path = os.path.join(BASE, "database", "employee_dump.sql")
     with open(path, "w") as f:
         f.write("\n".join(rows))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] database dump updated")
 
 
@@ -165,6 +185,7 @@ def generate_finance():
     path = os.path.join(BASE, "finance", "quarterly_finance_report.txt")
     with open(path, "w") as f:
         f.write("\n".join(lines))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] finance report updated")
 
 
@@ -191,6 +212,7 @@ def generate_server_config():
     path = os.path.join(BASE, "infrastructure", "server_config.conf")
     with open(path, "w") as f:
         f.write("\n".join(lines))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] server config updated")
 
 
@@ -212,6 +234,7 @@ def generate_devops_keys():
     path = os.path.join(BASE, "devops", "deployment_keys.pem")
     with open(path, "w") as f:
         f.write("\n".join(lines))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] devops keys updated")
 
 
@@ -238,6 +261,7 @@ def generate_logs():
     path = os.path.join(BASE, "logs", "backup_server_logs.log")
     with open(path, "w") as f:
         f.write("\n".join(lines))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] logs updated")
 
 
@@ -256,6 +280,7 @@ def generate_backup_manifest():
     path = os.path.join(BASE, "backups", "backup_manifest.txt")
     with open(path, "w") as f:
         f.write("\n".join(lines))
+    log_system_update(path)    # <-- tells Module 2 this was a system update
     print(f"  [+] backup manifest updated")
 
 
@@ -283,10 +308,11 @@ def main():
         os.makedirs(os.path.join(BASE, folder), exist_ok=True)
 
     print("=" * 45)
-    print("   DECEPTION ASSET GENERATOR v2.0")
+    print("   DECEPTION ASSET GENERATOR v3.0")
     print(f"   Interval : every {INTERVAL} seconds")
     print(f"   Output   : {BASE}/")
     print(f"   Alerts   : {ALERT_LOG}")
+    print(f"   Sys log  : {SYSTEM_UPDATE_LOG}")
     print("=" * 45)
 
     while True:
